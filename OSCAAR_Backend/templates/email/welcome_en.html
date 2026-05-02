@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome to OSCAAR</title>
+<style>
+  body { font-family: Georgia, serif; background: #F4F6F8; margin: 0; padding: 20px; }
+  .wrapper { max-width: 560px; margin: 0 auto; background: #fff; border-radius: 10px; overflow: hidden; border: 1px solid #DDE3E8; }
+  .header { background: #0A8C7C; padding: 20px 28px; }
+  .header-name { font-family: sans-serif; font-size: 20px; font-weight: 700; color: #fff; letter-spacing: .06em; }
+  .header-sub { font-size: 10px; color: rgba(255,255,255,.75); letter-spacing: .15em; text-transform: uppercase; font-family: sans-serif; }
+  .body { padding: 32px 36px; color: #333; }
+  h2 { font-size: 20px; color: #1A2733; margin-bottom: 14px; }
+  p { font-size: 14px; line-height: 1.7; color: #444; margin-bottom: 14px; }
+  .cta { display: inline-block; background: #0A8C7C; color: #fff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-family: sans-serif; font-weight: 700; font-size: 14px; margin: 8px 0 20px; }
+  .footer { background: #F4F6F8; padding: 14px 28px; font-size: 11px; color: #888; font-family: sans-serif; border-top: 1px solid #DDE3E8; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <div class="header-name">OSCAAR</div>
+    <div class="header-sub">Open Source Cancer Analysis &amp; Research</div>
+  </div>
+  <div class="body">
+    <h2>Welcome to OSCAAR, {{ full_name }}.</h2>
+    <p>Your research account has been successfully created. You now have secure access to the OSCAAR cancer research intelligence platform.</p>
+    <p>OSCAAR allows you to query your institution's private corpus of research documents using natural language — receiving structured answers grounded in your literature, with full source citations.</p>
+    <a class="cta" href="{{ login_url }}">Access OSCAAR</a>
+    <p style="font-size:12px;color:#888">If you did not create this account, please contact your system administrator immediately at <a href="mailto:admin@oscaar.org" style="color:#0A8C7C">admin@oscaar.org</a>.</p>
+    <p style="font-size:12px;color:#888">You can change your language preference at any time from your account settings.</p>
+  </div>
+  <div class="footer">
+    This email was sent by OSCAAR &middot; Open Source Cancer Analysis &amp; Research &middot; <a href="{{ login_url }}" style="color:#0A8C7C">www.oscaar.org</a><br>
+    Your language was automatically detected from your location. Change it in your account settings.
+  </div>
+</div>
+</body>
+</html>
