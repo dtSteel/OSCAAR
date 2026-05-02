@@ -1,0 +1,50 @@
+# ── Secrets and keys ───────────────────────────────
+.env
+.env.local
+.env.production
+keys/
+*.pem
+
+# ── Python ─────────────────────────────────────────
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# ── Node ───────────────────────────────────────────
+node_modules/
+npm-debug.log
+.vite/
+
+# ── Database ───────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+chroma_data/
+qdrant_data/
+
+# ── Uploads and user data ──────────────────────────
+uploads/
+batch_inbox/
+
+# ── OS files ───────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ── IDE files ──────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Logs ───────────────────────────────────────────
+*.log
+logs/
+
+# ── Zip files ──────────────────────────────────────
+*.zip
