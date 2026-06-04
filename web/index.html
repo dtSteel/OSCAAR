@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>OSCAAR — Oncology Research Assistant</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f5f7fa;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  header {
+    background: #ffffff;
+    border-bottom: 2px solid #e0e8f0;
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #1e6fff, #00a8e8);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 900;
+    color: white;
+  }
+
+  .logo-text h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a2744;
+    letter-spacing: 2px;
+  }
+
+  .logo-text p {
+    font-size: 12px;
+    color: #6b8cae;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .stats {
+    display: flex;
+    gap: 30px;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e6fff;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: #6b8cae;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  .hero h2 {
+    font-size: 30px;
+    font-weight: 700;
+    color: #1a2744;
+    margin-bottom: 10px;
+  }
+
+  .hero h2 span {
+    color: #1e6fff;
+  }
+
+  .hero p {
+    color: #6b8cae;
+    font-size: 15px;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .search-box {
+    background: #ffffff;
+    border: 1px solid #d0dce8;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .search-box textarea {
+    width: 100%;
+    background: #f8fafc;
+    border: 1px solid #d0dce8;
+    border-radius: 10px;
+    color: #1a2744;
+    font-size: 15px;
+    padding: 16px;
+    resize: vertical;
+    min-height: 100px;
+    font-family: inherit;
+    line-height: 1.5;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-box textarea:focus {
+    border-color: #1e6fff;
+    background: #ffffff;
+  }
+
+  .search-box textarea::placeholder {
+    color: #a0b4c8;
+  }
+
+  .search-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .example-queries {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .example-btn {
+    background: #f0f4ff;
+    border: 1px solid #c0d0f0;
+    color: #1e6fff;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .example-btn:hover {
+    background: #1e6fff;
+    color: white;
+    border-color: #1e6fff;
+  }
+
+  .submit-btn {
+    background: linear-gradient(135deg, #1e6fff, #00a8e8);
+    border: none;
+    color: white;
+    padding: 12px 32px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(30,111,255,0.3);
+  }
+
+  .submit-btn:hover { opacity: 0.9; }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 40px;
+  }
+
+  .loading.active { display: block; }
+
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid #d0dce8;
+    border-top-color: #1e6fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading p {
+    color: #6b8cae;
+    font-size: 14px;
+  }
+
+  .result { display: none; }
+  .result.active { display: block; }
+
+  .answer-card {
+    background: #ffffff;
+    border: 1px solid #d0dce8;
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .answer-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e8eef4;
+  }
+
+  .badge {
+    background: #f0f4ff;
+    border: 1px solid #c0d0f0;
+    color: #1e6fff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .answer-text {
+    color: #2a3a5a;
+    line-height: 1.8;
+    font-size: 15px;
+    white-space: pre-wrap;
+  }
+
+  .token-info {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e8eef4;
+    display: flex;
+    gap: 20px;
+    font-size: 12px;
+    color: #a0b4c8;
+  }
+
+  .articles-section h3 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #6b8cae;
+    margin-bottom: 14px;
+  }
+
+  .article-card {
+    background: #ffffff;
+    border: 1px solid #d0dce8;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    transition: box-shadow 0.2s;
+  }
+
+  .article-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .article-score {
+    background: #f0f4ff;
+    border: 1px solid #c0d0f0;
+    color: #1e6fff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    min-width: 52px;
+    text-align: center;
+  }
+
+  .article-info { flex: 1; }
+
+  .article-title {
+    color: #1a2744;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+
+  .article-meta {
+    color: #6b8cae;
+    font-size: 12px;
+  }
+
+  .article-meta a {
+    color: #1e6fff;
+    text-decoration: none;
+  }
+
+  .article-meta a:hover { text-decoration: underline; }
+
+  .error-card {
+    background: #fff5f5;
+    border: 1px solid #ffc0c0;
+    border-radius: 16px;
+    padding: 24px;
+    color: #cc3333;
+    display: none;
+  }
+
+  .error-card.active { display: block; }
+
+  footer {
+    text-align: center;
+    padding: 30px;
+    color: #a0b4c8;
+    font-size: 12px;
+    border-top: 1px solid #e0e8f0;
+    margin-top: 40px;
+    background: #ffffff;
+  }
+
+  footer a { color: #1e6fff; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">O</div>
+    <div class="logo-text">
+      <h1>OSCAAR</h1>
+      <p>Oncology Research Assistant</p>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">3.5M</div>
+      <div class="stat-label">Articles</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">768</div>
+      <div class="stat-label">Dimensions</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">MedCPT</div>
+      <div class="stat-label">Model</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <h2>Ask <span>OSCAAR</span> anything about cancer</h2>
+    <p>Powered by 3.5 million peer-reviewed PubMed articles, embedded with NCBI's MedCPT model. Every answer is cited.</p>
+  </div>
+
+  <div class="search-box">
+    <textarea id="question" placeholder="e.g. What is the overall survival benefit of pembrolizumab in non-small cell lung cancer with high PD-L1 expression?"></textarea>
+    <div class="search-actions">
+      <div class="example-queries">
+        <button class="example-btn" onclick="setQuery('What are the most effective treatments for triple negative breast cancer?')">TNBC treatments</button>
+        <button class="example-btn" onclick="setQuery('What is the role of BRCA1 mutations in ovarian cancer prognosis?')">BRCA1 & ovarian cancer</button>
+        <button class="example-btn" onclick="setQuery('Compare checkpoint inhibitors in melanoma treatment')">Checkpoint inhibitors</button>
+        <button class="example-btn" onclick="setQuery('What are the survival rates for glioblastoma with temozolomide?')">GBM survival</button>
+      </div>
+      <button class="submit-btn" id="submitBtn" onclick="submitQuery()">Search OSCAAR</button>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Searching 3.5 million cancer articles...</p>
+  </div>
+
+  <div class="error-card" id="errorCard"></div>
+
+  <div class="result" id="result">
+    <div class="answer-card">
+      <div class="answer-header">
+        <span class="badge">OSCAAR Response</span>
+      </div>
+      <div class="answer-text" id="answerText"></div>
+      <div class="token-info" id="tokenInfo"></div>
+    </div>
+
+    <div class="articles-section">
+      <h3>Retrieved Articles</h3>
+      <div id="articlesList"></div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p>OSCAAR — Oncology Research Assistant &bull; Powered by MedCPT + PubMed &bull; <a href="https://www.oscaar.org">oscaar.org</a></p>
+  <p style="margin-top:6px">All responses are generated from peer-reviewed literature. Not a substitute for clinical judgment.</p>
+</footer>
+
+<script>
+const API = 'https://oscaar.org/api';
+
+function setQuery(text) {
+  document.getElementById('question').value = text;
+}
+
+async function submitQuery() {
+  const question = document.getElementById('question').value.trim();
+  if (!question) return;
+
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('loading').classList.add('active');
+  document.getElementById('result').classList.remove('active');
+  document.getElementById('errorCard').classList.remove('active');
+
+  try {
+    const response = await fetch(`${API}/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question })
+    });
+
+    if (!response.ok) throw new Error(`Server error: ${response.status}`);
+    const data = await response.json();
+
+    document.getElementById('answerText').textContent = data.answer;
+    document.getElementById('tokenInfo').innerHTML =
+      `<span>Input tokens: ${data.tokens_used.input.toLocaleString()}</span>
+       <span>Output tokens: ${data.tokens_used.output.toLocaleString()}</span>
+       <span>Total: ${data.tokens_used.total.toLocaleString()}</span>`;
+
+    const list = document.getElementById('articlesList');
+    list.innerHTML = data.retrieved_articles.map(a => `
+      <div class="article-card">
+        <div class="article-score">${a.score.toFixed(3)}</div>
+        <div class="article-info">
+          <div class="article-title">${a.title}</div>
+          <div class="article-meta">
+            ${a.authors.slice(0,3).join(', ')}${a.authors.length > 3 ? ' et al.' : ''} &bull;
+            ${a.journal} &bull; ${a.year} &bull;
+            <a href="https://pubmed.ncbi.nlm.nih.gov/${a.pmid}" target="_blank">PMID: ${a.pmid}</a>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    document.getElementById('result').classList.add('active');
+
+  } catch (err) {
+    const card = document.getElementById('errorCard');
+    card.textContent = `Error: ${err.message}`;
+    card.classList.add('active');
+  } finally {
+    document.getElementById('loading').classList.remove('active');
+    document.getElementById('submitBtn').disabled = false;
+  }
+}
+
+document.getElementById('question').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.ctrlKey) submitQuery();
+});
+</script>
+
+</body>
+</html>

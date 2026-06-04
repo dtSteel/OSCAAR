@@ -1,0 +1,15 @@
+pubmed_env/
+pip_cache/
+pip_tmp/
+cancer_articles.jsonl
+cancer_articles.jsonl.progress
+qdrant_data/
+qdrant_snapshots/
+*.snapshot
+*.progress
+embed_progress.txt
+lost+found/
+baseline/
+__pycache__/
+*.pyc
+.env
