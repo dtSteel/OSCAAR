@@ -27,7 +27,7 @@ model.eval()
 torch.set_num_threads(16)
 print("Model ready")
 
-qdrant    = QdrantClient(host="localhost", port=6333)
+qdrant    = QdrantClient(host="localhost", port=6333, timeout=120)
 ai_client = OpenAI(api_key=OPENAI_KEY)
 
 SYSTEM_PROMPT = """You are OSCAAR, an expert oncology research assistant.
@@ -104,6 +104,8 @@ OFF_TOPIC_RESPONSE = "OSCAAR is designed specifically for oncology research. Ple
 class QueryRequest(BaseModel):
     question: str
     top_k: int = TOP_K
+    year_from: int | None = None
+    year_to: int | None = None
 
 class QueryResponse(BaseModel):
     answer:             str
@@ -140,14 +142,36 @@ async def query(request: QueryRequest):
     # Embed the question
     query_vector = embed_query(request.question)
 
+    # Decide how many candidates to pull. If a year filter is active, over-fetch
+    # so that after filtering we still have enough results to work with.
+    has_year_filter = (request.year_from is not None) or (request.year_to is not None)
+    fetch_limit = (request.top_k * 8) if has_year_filter else request.top_k
+
     # Search Qdrant
     raw = qdrant.query_points(
         collection_name=COLLECTION,
         query=query_vector,
-        limit=request.top_k,
+        limit=fetch_limit,
         with_payload=True
     )
     results = raw.points
+
+    # Python-side year filtering (years are stored as strings; parse defensively).
+    if has_year_filter:
+        def _year_ok(hit):
+            raw_year = (hit.payload or {}).get("year", "")
+            try:
+                y = int(str(raw_year)[:4])   # first 4 chars handles "1975 Jul" etc.
+            except (ValueError, TypeError):
+                return False                  # unparseable/missing year -> exclude when filtering
+            if request.year_from is not None and y < request.year_from:
+                return False
+            if request.year_to is not None and y > request.year_to:
+                return False
+            return True
+
+        results = [h for h in results if _year_ok(h)]
+        results = results[:request.top_k]     # trim back to requested count
 
     if not results:
         raise HTTPException(status_code=404, detail="No relevant articles found")
@@ -171,13 +195,15 @@ async def query(request: QueryRequest):
         )
 
         articles.append({
-            "pmid":    p.get("pmid",""),
-            "title":   p.get("title",""),
-            "journal": p.get("journal",""),
-            "year":    p.get("year",""),
-            "authors": authors_list,
-            "score":   round(hit.score, 3)
+            "pmid":     p.get("pmid",""),
+            "title":    p.get("title",""),
+            "journal":  p.get("journal",""),
+            "year":     p.get("year",""),
+            "authors":  authors_list,
+            "abstract": p.get("abstract",""),
+            "score":    round(hit.score, 3)
         })
+
 
     context = "\n\n".join(context_parts)
 
