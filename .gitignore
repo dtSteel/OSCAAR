@@ -18,3 +18,5 @@ __pycache__/
 oscaar-before-wipe-*.db
 *.mmdb
 *.bak
+swapfile
+.cache/
