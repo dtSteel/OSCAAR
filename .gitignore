@@ -23,3 +23,9 @@ swapfile
 *.db
 *.log
 oscaar-before-wipe-*
+oscaar.db
+oscaar.db-shm
+oscaar.db-wal
+*.db
+*.db-shm
+*.db-wal
