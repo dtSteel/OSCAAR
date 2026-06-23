@@ -20,3 +20,6 @@ oscaar-before-wipe-*.db
 *.bak
 swapfile
 .cache/
+*.db
+*.log
+oscaar-before-wipe-*
