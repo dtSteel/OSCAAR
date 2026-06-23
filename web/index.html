@@ -3,16 +3,20 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>OSCAAR — Oncology Research Assistant | Cancer Research AI</title>
-<meta name="description" content="Search 3.5 million peer-reviewed cancer research articles instantly. OSCAAR provides cited, evidence-based answers to oncology questions powered by NCBI's MedCPT model.">
+<title>OSCAAR — Open Source Cancer Analysis and Research</title>
+<meta name="description" content="Search millions of peer-reviewed cancer research articles instantly. OSCAAR provides cited, evidence-based answers to oncology questions powered by NCBI's MedCPT model.">
 <meta name="keywords" content="oncology research, cancer research, PubMed search, medical AI, cancer treatment, tumor research, clinical oncology">
 <meta name="author" content="OSCAAR">
-<meta property="og:title" content="OSCAAR — Oncology Research Assistant">
-<meta property="og:description" content="Search 3.5 million peer-reviewed cancer articles. Every answer is cited.">
+<meta property="og:title" content="OSCAAR — Open Source Cancer Analysis and Research">
+<meta property="og:description" content="Search millions of peer-reviewed cancer articles. Every answer is cited.">
 <meta property="og:url" content="https://oscaar.org">
 <meta property="og:type" content="website">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://oscaar.org">
+
+<!-- Favicon: same mark as the header logo, scales to the browser tab -->
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -25,12 +29,39 @@
 
   header {
     background: #ffffff;
-    border-bottom: 2px solid #e0e8f0;
     padding: 20px 40px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+  }
+
+  .oscaar-nav {
+    background: #ffffff;
+    border-bottom: 2px solid #e0e8f0;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .oscaar-nav-link {
+    padding: 13px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #5c6f76;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .oscaar-nav-link:hover { color: #1e6fff; }
+  .oscaar-nav-link.active {
+    color: #1e6fff;
+    border-bottom-color: #1e6fff;
+  }
+  @media (max-width: 600px) {
+    .oscaar-nav { padding: 0 16px; }
+    .oscaar-nav-link { padding: 12px 12px; }
   }
 
   .logo {
@@ -42,14 +73,7 @@
   .logo-icon {
     width: 48px;
     height: 48px;
-    background: linear-gradient(135deg, #1e6fff, #00a8e8);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    font-weight: 900;
-    color: white;
+    flex-shrink: 0;
   }
 
   .logo-text h1 {
@@ -61,31 +85,9 @@
 
   .logo-text p {
     font-size: 12px;
-    color: #6b8cae;
+    color: #4f6b8a;
     letter-spacing: 1px;
     text-transform: uppercase;
-  }
-
-  .stats {
-    display: flex;
-    gap: 30px;
-  }
-
-  .stat {
-    text-align: center;
-  }
-
-  .stat-num {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1e6fff;
-  }
-
-  .stat-label {
-    font-size: 10px;
-    color: #6b8cae;
-    text-transform: uppercase;
-    letter-spacing: 1px;
   }
 
   main {
@@ -106,12 +108,10 @@
     margin-bottom: 10px;
   }
 
-  .hero h2 span {
-    color: #1e6fff;
-  }
+  .hero h2 span { color: #1e6fff; }
 
   .hero p {
-    color: #6b8cae;
+    color: #4f6b8a;
     font-size: 15px;
     max-width: 600px;
     margin: 0 auto;
@@ -143,14 +143,122 @@
     transition: border-color 0.2s;
   }
 
-  .search-box textarea:focus {
-    border-color: #1e6fff;
-    background: #ffffff;
+  .search-box textarea:focus { border-color: #1e6fff; background: #ffffff; }
+  .search-box textarea::placeholder { color: #7d93ab; }
+
+  /* Controls row: date range + history */
+  .controls-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 14px;
+    flex-wrap: wrap;
   }
 
-  .search-box textarea::placeholder {
-    color: #a0b4c8;
+  .control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #4f6b8a;
   }
+
+  .control-group label { white-space: nowrap; }
+
+  .control-group select,
+  .control-group input[type="number"] {
+    background: #f8fafc;
+    border: 1px solid #d0dce8;
+    border-radius: 8px;
+    color: #1a2744;
+    font-size: 13px;
+    padding: 6px 10px;
+    font-family: inherit;
+    outline: none;
+  }
+
+  .control-group select:focus,
+  .control-group input[type="number"]:focus { border-color: #1e6fff; }
+
+  .custom-years { display: none; align-items: center; gap: 6px; }
+  .custom-years.active { display: flex; }
+  .custom-years input[type="number"] { width: 80px; }
+
+  /* History button + dropdown */
+  .history-wrap { position: relative; }
+
+  .history-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    border: 1px solid #d0dce8;
+    border-radius: 8px;
+    color: #4f6b8a;
+    font-size: 13px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .history-btn:hover { border-color: #1e6fff; color: #1e6fff; }
+
+  .history-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 320px;
+    max-width: 480px;
+    background: #ffffff;
+    border: 1px solid #d0dce8;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    padding: 6px;
+    display: none;
+    z-index: 50;
+  }
+
+  .history-wrap.open .history-dropdown { display: block; }
+
+  .history-empty {
+    padding: 12px 14px;
+    color: #7d93ab;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .history-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 9px 12px;
+    border-radius: 7px;
+    color: #2a3a5a;
+    font-size: 13px;
+    cursor: pointer;
+    line-height: 1.4;
+    font-family: inherit;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .history-item:hover { background: #f0f4ff; color: #1e6fff; }
+
+  .history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px 8px;
+    border-bottom: 1px solid #e8eef4;
+    margin-bottom: 4px;
+  }
+
+  .history-header span { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #7d93ab; }
+  .history-clear { background: none; border: none; color: #7d93ab; font-size: 11px; cursor: pointer; }
+  .history-clear:hover { color: #cc3333; }
 
   .search-actions {
     display: flex;
@@ -161,11 +269,7 @@
     gap: 10px;
   }
 
-  .example-queries {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
+  .example-queries { display: flex; gap: 8px; flex-wrap: wrap; }
 
   .example-btn {
     background: #f0f4ff;
@@ -178,11 +282,7 @@
     transition: all 0.2s;
   }
 
-  .example-btn:hover {
-    background: #1e6fff;
-    color: white;
-    border-color: #1e6fff;
-  }
+  .example-btn:hover { background: #1e6fff; color: white; border-color: #1e6fff; }
 
   .submit-btn {
     background: linear-gradient(135deg, #1e6fff, #00a8e8);
@@ -201,17 +301,11 @@
   .submit-btn:hover { opacity: 0.9; }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  .loading {
-    display: none;
-    text-align: center;
-    padding: 40px;
-  }
-
+  .loading { display: none; text-align: center; padding: 40px; }
   .loading.active { display: block; }
 
   .spinner {
-    width: 48px;
-    height: 48px;
+    width: 48px; height: 48px;
     border: 3px solid #d0dce8;
     border-top-color: #1e6fff;
     border-radius: 50%;
@@ -221,10 +315,7 @@
 
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .loading p {
-    color: #6b8cae;
-    font-size: 14px;
-  }
+  .loading p { color: #4f6b8a; font-size: 14px; }
 
   .result { display: none; }
   .result.active { display: block; }
@@ -259,12 +350,7 @@
     text-transform: uppercase;
   }
 
-  .answer-text {
-    color: #2a3a5a;
-    line-height: 1.8;
-    font-size: 15px;
-    white-space: pre-wrap;
-  }
+  .answer-text { color: #2a3a5a; line-height: 1.8; font-size: 15px; white-space: pre-wrap; }
 
   .token-info {
     margin-top: 16px;
@@ -273,16 +359,41 @@
     display: flex;
     gap: 20px;
     font-size: 12px;
-    color: #a0b4c8;
+    color: #7d93ab;
   }
 
   .articles-section h3 {
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: #6b8cae;
+    color: #4f6b8a;
     margin-bottom: 14px;
   }
+
+  .sources-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #f0f4ff;
+    border: 1px solid #c0d0f0;
+    color: #1e6fff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+    margin-bottom: 14px;
+  }
+
+  .sources-toggle:hover { background: #1e6fff; color: #fff; border-color: #1e6fff; }
+
+  .sources-caret { font-size: 9px; transition: transform 0.2s; }
+  .sources-toggle.open .sources-caret { transform: rotate(180deg); }
+
+  .articles-list { display: none; }
+  .articles-list.open { display: block; }
 
   .article-card {
     background: #ffffff;
@@ -297,9 +408,7 @@
     transition: box-shadow 0.2s;
   }
 
-  .article-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  }
+  .article-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 
   .article-score {
     background: #f0f4ff;
@@ -316,24 +425,9 @@
 
   .article-info { flex: 1; }
 
-  .article-title {
-    color: #1a2744;
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 4px;
-    line-height: 1.4;
-  }
-
-  .article-meta {
-    color: #6b8cae;
-    font-size: 12px;
-  }
-
-  .article-meta a {
-    color: #1e6fff;
-    text-decoration: none;
-  }
-
+  .article-title { color: #1a2744; font-size: 14px; font-weight: 600; margin-bottom: 4px; line-height: 1.4; }
+  .article-meta { color: #4f6b8a; font-size: 12px; }
+  .article-meta a { color: #1e6fff; text-decoration: none; }
   .article-meta a:hover { text-decoration: underline; }
 
   .error-card {
@@ -350,7 +444,7 @@
   footer {
     text-align: center;
     padding: 30px;
-    color: #a0b4c8;
+    color: #7d93ab;
     font-size: 12px;
     border-top: 1px solid #e0e8f0;
     margin-top: 40px;
@@ -358,56 +452,93 @@
   }
 
   footer a { color: #1e6fff; text-decoration: none; }
+  .footer-clock { margin-top: 8px; font-size: 13px; color: #1a2744; font-weight: 600; }
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">
-    <div class="logo-icon">O</div>
+    <div class="logo-icon">
+      <!-- OSCAAR mark: protective ring forming an "O", with a double-helix strand at its core -->
+      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="OSCAAR logo">
+        <defs>
+          <linearGradient id="oscaarGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#1e6fff"/>
+            <stop offset="1" stop-color="#00a8e8"/>
+          </linearGradient>
+        </defs>
+        <circle cx="24" cy="24" r="20" fill="none" stroke="url(#oscaarGrad)" stroke-width="5"/>
+        <g stroke="url(#oscaarGrad)" stroke-width="2.6" stroke-linecap="round" fill="none">
+          <path d="M18 13 C 30 20, 18 28, 30 35"/>
+          <path d="M30 13 C 18 20, 30 28, 18 35"/>
+        </g>
+        <g stroke="#00a8e8" stroke-width="2" stroke-linecap="round">
+          <line x1="20.5" y1="17" x2="27.5" y2="17"/>
+          <line x1="21" y1="24" x2="27" y2="24"/>
+          <line x1="20.5" y1="31" x2="27.5" y2="31"/>
+        </g>
+      </svg>
+    </div>
     <div class="logo-text">
       <h1>OSCAAR</h1>
-      <p>Oncology Research Assistant</p>
-    </div>
-  </div>
-  <div class="stats">
-    <div class="stat">
-      <div class="stat-num">3.5M</div>
-      <div class="stat-label">Articles</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">768</div>
-      <div class="stat-label">Dimensions</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">MedCPT</div>
-      <div class="stat-label">Model</div>
+      <p>Open Source Cancer Analysis and Research</p>
     </div>
   </div>
 </header>
 
+<nav class="oscaar-nav">
+  <a href="/" class="oscaar-nav-link active">Ask</a>
+  <a href="/trials" class="oscaar-nav-link">Trials</a>
+  <a href="/about" class="oscaar-nav-link">About</a>
+</nav>
+
 <main>
   <div class="hero">
-    <h2>Ask <span>OSCAAR</span> anything about cancer</h2>
-    <p>Powered by 3.5 million peer-reviewed PubMed articles, embedded with NCBI's MedCPT model. Every answer is cited.</p>
+    <h2>Ask <span>OSCAAR</span> about cancer</h2>
+    <p>Every answer is cited.</p>
   </div>
 
   <div class="search-box">
     <textarea id="question" placeholder="e.g. What is the overall survival benefit of pembrolizumab in non-small cell lung cancer with high PD-L1 expression?"></textarea>
-    <div class="search-actions">
-      <div class="example-queries">
-        <button class="example-btn" onclick="setQuery('What are the most effective treatments for triple negative breast cancer?')">TNBC treatments</button>
-        <button class="example-btn" onclick="setQuery('What is the role of BRCA1 mutations in ovarian cancer prognosis?')">BRCA1 & ovarian cancer</button>
-        <button class="example-btn" onclick="setQuery('Compare checkpoint inhibitors in melanoma treatment')">Checkpoint inhibitors</button>
-        <button class="example-btn" onclick="setQuery('What are the survival rates for glioblastoma with temozolomide?')">GBM survival</button>
+
+    <!-- Controls: date range + history -->
+    <div class="controls-row">
+      <div class="control-group">
+        <label for="dateRange">Publication years:</label>
+        <select id="dateRange" onchange="onDateRangeChange()">
+          <option value="5">Last 5 years</option>
+          <option value="10">Last 10 years</option>
+          <option value="0">All years</option>
+          <option value="custom">Custom...</option>
+        </select>
+        <span class="custom-years" id="customYears">
+          <input type="number" id="yearFrom" placeholder="From" min="1900" max="2100">
+          <span>to</span>
+          <input type="number" id="yearTo" placeholder="To" min="1900" max="2100">
+        </span>
       </div>
+
+      <div class="history-wrap" id="historyWrap">
+        <button class="history-btn" onclick="toggleHistory()" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+          Recent
+        </button>
+        <div class="history-dropdown" id="historyDropdown"></div>
+      </div>
+    </div>
+
+    <div class="search-actions">
+      <!-- Example questions render from EXAMPLE_QUERIES below. Edit that array,
+           or later serve from API + '/examples' (see loadExampleQueries). -->
+      <div class="example-queries" id="exampleQueries"></div>
       <button class="submit-btn" id="submitBtn" onclick="submitQuery()">Search OSCAAR</button>
     </div>
   </div>
 
   <div class="loading" id="loading">
     <div class="spinner"></div>
-    <p>Searching 3.5 million cancer articles...</p>
+    <p>Searching the cancer literature...</p>
   </div>
 
   <div class="error-card" id="errorCard"></div>
@@ -422,26 +553,166 @@
     </div>
 
     <div class="articles-section">
-      <h3>Retrieved Articles</h3>
-      <div id="articlesList"></div>
+      <button class="sources-toggle" id="sourcesToggle" onclick="toggleSources()" type="button">
+        <span id="sourcesToggleText">Show sources</span>
+        <span class="sources-caret" id="sourcesCaret">&#9660;</span>
+      </button>
+      <div id="articlesList" class="articles-list"></div>
     </div>
   </div>
 </main>
 
 <footer>
-  <p>OSCAAR — Oncology Research Assistant &bull; Powered by MedCPT + PubMed &bull; <a href="https://www.oscaar.org">oscaar.org</a></p>
+  <p>Open Source Cancer Analysis and Research &bull; <a href="https://www.oscaar.org">oscaar.org</a></p>
   <p style="margin-top:6px">All responses are generated from peer-reviewed literature. Not a substitute for clinical judgment.</p>
+  <p class="footer-clock" id="footerClock"></p>
 </footer>
 
 <script>
-const API = 'https://oscaar.org/api';
+const API = "/api";
 
-function setQuery(text) {
-  document.getElementById('question').value = text;
+/* ---------- Live clock (footer) ---------- */
+function updateClock() {
+  var now = new Date();
+  document.getElementById('footerClock').textContent = now.toLocaleString();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ---------- Date range ---------- */
+function onDateRangeChange() {
+  var sel = document.getElementById('dateRange').value;
+  var custom = document.getElementById('customYears');
+  if (sel === 'custom') {
+    custom.classList.add('active');
+  } else {
+    custom.classList.remove('active');
+  }
 }
 
+/* Returns {year_from, year_to} based on the current selection, or {} for all years */
+function getYearRange() {
+  var sel = document.getElementById('dateRange').value;
+  var thisYear = new Date().getFullYear();
+  if (sel === '0') return {};                       // all years
+  if (sel === '5')  return { year_from: thisYear - 5,  year_to: thisYear };
+  if (sel === '10') return { year_from: thisYear - 10, year_to: thisYear };
+  if (sel === 'custom') {
+    var f = parseInt(document.getElementById('yearFrom').value, 10);
+    var t = parseInt(document.getElementById('yearTo').value, 10);
+    var out = {};
+    if (!isNaN(f)) out.year_from = f;
+    if (!isNaN(t)) out.year_to = t;
+    return out;
+  }
+  return {};
+}
+
+/* ---------- Query history (localStorage, last 5, question-only) ---------- */
+var HISTORY_KEY = 'oscaar_history';
+var HISTORY_MAX = 5;
+
+function getHistory() {
+  try {
+    var raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+
+function saveToHistory(question) {
+  if (!question) return;
+  var hist = getHistory();
+  hist = hist.filter(function(q) { return q !== question; });  // de-dupe
+  hist.unshift(question);                                      // newest first
+  if (hist.length > HISTORY_MAX) hist = hist.slice(0, HISTORY_MAX);
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(hist)); } catch (e) {}
+  renderHistory();
+}
+
+function clearHistory() {
+  try { localStorage.removeItem(HISTORY_KEY); } catch (e) {}
+  renderHistory();
+}
+
+function renderHistory() {
+  var hist = getHistory();
+  var dd = document.getElementById('historyDropdown');
+  if (!hist.length) {
+    dd.innerHTML = '<div class="history-empty">No recent searches yet</div>';
+    return;
+  }
+  var html = '<div class="history-header"><span>Recent searches</span>' +
+             '<button class="history-clear" onclick="clearHistory()" type="button">Clear</button></div>';
+  html += hist.map(function(q) {
+    var safe = q.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return '<button class="history-item" title="' + safe + '" onclick="rerunHistory(' + JSON.stringify(q).replace(/"/g,'&quot;') + ')" type="button">' + safe + '</button>';
+  }).join('');
+  dd.innerHTML = html;
+}
+
+function rerunHistory(question) {
+  document.getElementById('question').value = question;
+  document.getElementById('historyWrap').classList.remove('open');
+  submitQuery();
+}
+
+function toggleHistory() {
+  document.getElementById('historyWrap').classList.toggle('open');
+}
+
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('historyWrap');
+  if (wrap && !wrap.contains(e.target)) wrap.classList.remove('open');
+});
+
+/* ---------- Example questions ---------- */
+const EXAMPLE_QUERIES = [
+  { label: "TNBC treatments",        query: "What are the most effective treatments for triple negative breast cancer?" },
+  { label: "BRCA1 & ovarian cancer", query: "What is the role of BRCA1 mutations in ovarian cancer prognosis?" },
+  { label: "Checkpoint inhibitors",  query: "Compare checkpoint inhibitors in melanoma treatment" },
+  { label: "GBM survival",           query: "What are the survival rates for glioblastoma with temozolomide?" }
+];
+
+function renderExampleQueries(items) {
+  var container = document.getElementById('exampleQueries');
+  container.innerHTML = items.map(function(item) {
+    var q = JSON.stringify(item.query).replace(/"/g, '&quot;');
+    return '<button class="example-btn" onclick="setQuery(' + q + ')">' + item.label + '</button>';
+  }).join('');
+}
+
+async function loadExampleQueries() {
+  try {
+    var res = await fetch(API + '/examples', { credentials: 'same-origin' });
+    if (res.ok) {
+      var data = await res.json();
+      if (Array.isArray(data) && data.length) { renderExampleQueries(data); return; }
+    }
+  } catch (e) { /* no endpoint yet - use defaults */ }
+  renderExampleQueries(EXAMPLE_QUERIES);
+}
+
+function setQuery(text) { document.getElementById('question').value = text; }
+
+/* ---------- Show / hide sources ---------- */
+function toggleSources() {
+  var list = document.getElementById('articlesList');
+  var btn = document.getElementById('sourcesToggle');
+  var txt = document.getElementById('sourcesToggleText');
+  var open = list.classList.toggle('open');
+  btn.classList.toggle('open', open);
+  txt.textContent = open ? 'Hide sources' : 'Show sources';
+}
+
+function collapseSources() {
+  document.getElementById('articlesList').classList.remove('open');
+  document.getElementById('sourcesToggle').classList.remove('open');
+  document.getElementById('sourcesToggleText').textContent = 'Show sources';
+}
+
+/* ---------- Main query ---------- */
 async function submitQuery() {
-  const question = document.getElementById('question').value.trim();
+  var question = document.getElementById('question').value.trim();
   if (!question) return;
 
   document.getElementById('submitBtn').disabled = true;
@@ -449,42 +720,52 @@ async function submitQuery() {
   document.getElementById('result').classList.remove('active');
   document.getElementById('errorCard').classList.remove('active');
 
+  var body = { question: question };
+  var range = getYearRange();
+  if (range.year_from !== undefined) body.year_from = range.year_from;
+  if (range.year_to   !== undefined) body.year_to   = range.year_to;
+
   try {
-    const response = await fetch(`${API}/query`, {
+    var response = await fetch(API + '/query', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question })
+      credentials: 'same-origin',
+      body: JSON.stringify(body)
     });
 
-    if (!response.ok) throw new Error(`Server error: ${response.status}`);
-    const data = await response.json();
+    if (response.status === 401 || response.status === 403) { window.location.href = '/login'; return; }
+    if (!response.ok) throw new Error('Server error: ' + response.status);
+    var data = await response.json();
+
+    saveToHistory(question);
 
     document.getElementById('answerText').textContent = data.answer;
     document.getElementById('tokenInfo').innerHTML =
-      `<span>Input tokens: ${data.tokens_used.input.toLocaleString()}</span>
-       <span>Output tokens: ${data.tokens_used.output.toLocaleString()}</span>
-       <span>Total: ${data.tokens_used.total.toLocaleString()}</span>`;
+      '<span>Input tokens: ' + data.tokens_used.input.toLocaleString() + '</span>' +
+      '<span>Output tokens: ' + data.tokens_used.output.toLocaleString() + '</span>' +
+      '<span>Total: ' + data.tokens_used.total.toLocaleString() + '</span>';
 
-    const list = document.getElementById('articlesList');
-    list.innerHTML = data.retrieved_articles.map(a => `
-      <div class="article-card">
-        <div class="article-score">${a.score.toFixed(3)}</div>
-        <div class="article-info">
-          <div class="article-title">${a.title}</div>
-          <div class="article-meta">
-            ${a.authors.slice(0,3).join(', ')}${a.authors.length > 3 ? ' et al.' : ''} &bull;
-            ${a.journal} &bull; ${a.year} &bull;
-            <a href="https://pubmed.ncbi.nlm.nih.gov/${a.pmid}" target="_blank">PMID: ${a.pmid}</a>
-          </div>
-        </div>
-      </div>
-    `).join('');
+    var list = document.getElementById('articlesList');
+    list.innerHTML = data.retrieved_articles.map(function(a) {
+      return '<div class="article-card">' +
+        '<div class="article-score">' + a.score.toFixed(3) + '</div>' +
+        '<div class="article-info">' +
+          '<div class="article-title">' + a.title + '</div>' +
+          '<div class="article-meta">' +
+            a.authors.slice(0,3).join(', ') + (a.authors.length > 3 ? ' et al.' : '') + ' &bull; ' +
+            a.journal + ' &bull; ' + a.year + ' &bull; ' +
+            '<a href="https://pubmed.ncbi.nlm.nih.gov/' + a.pmid + '" target="_blank">PMID: ' + a.pmid + '</a>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
 
     document.getElementById('result').classList.add('active');
+    collapseSources();
 
   } catch (err) {
-    const card = document.getElementById('errorCard');
-    card.textContent = `Error: ${err.message}`;
+    var card = document.getElementById('errorCard');
+    card.textContent = 'Error: ' + err.message;
     card.classList.add('active');
   } finally {
     document.getElementById('loading').classList.remove('active');
@@ -492,9 +773,97 @@ async function submitQuery() {
   }
 }
 
-document.getElementById('question').addEventListener('keydown', e => {
+document.getElementById('question').addEventListener('keydown', function(e) {
   if (e.key === 'Enter' && e.ctrlKey) submitQuery();
 });
+
+/* init */
+loadExampleQueries();
+renderHistory();
+
+/* ---------- One-time welcome panel (isolated; self-contained; shows once) ---------- */
+(function setupWelcomePanel() {
+  try {
+    fetch('/auth/welcome', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.show || !d.paragraphs) return;
+
+        var overlay = document.createElement('div');
+        overlay.id = 'welcomeOverlay';
+        overlay.style.cssText =
+          'position:fixed;inset:0;background:rgba(20,39,68,0.45);z-index:1000;' +
+          'display:flex;align-items:center;justify-content:center;padding:20px';
+
+        var paras = d.paragraphs.map(function (p) {
+          return '<p style="margin:0 0 13px;line-height:1.6;color:#1a2744;font-size:15px">' +
+                 p.replace(/</g, '&lt;') + '</p>';
+        }).join('');
+
+        var card = document.createElement('div');
+        card.style.cssText =
+          'background:#fff;max-width:720px;width:100%;max-height:85vh;overflow-y:auto;' +
+          'border-radius:16px;box-shadow:0 12px 48px rgba(20,39,68,0.3);padding:32px 34px';
+        card.innerHTML =
+          '<div style="font-family:Georgia,serif;font-size:22px;font-weight:600;letter-spacing:1px;color:#1e6fff">OSCAAR</div>' +
+          '<div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#7d93ab;margin-bottom:20px">Open Source Cancer Analysis and Research</div>' +
+          paras +
+          '<button id="welcomeDismiss" type="button" style="margin-top:14px;width:100%;padding:13px;' +
+          'font-size:15px;font-weight:700;color:#fff;background:linear-gradient(135deg,#1e6fff,#00a8e8);' +
+          'border:none;border-radius:11px;cursor:pointer">Ask your first question</button>';
+
+        overlay.appendChild(card);
+        document.body.appendChild(overlay);
+
+        function dismiss() {
+          var el = document.getElementById('welcomeOverlay');
+          if (el) el.parentNode.removeChild(el);
+          fetch('/auth/welcome/dismiss', { method: 'POST', credentials: 'same-origin' }).catch(function(){});
+        }
+        document.getElementById('welcomeDismiss').addEventListener('click', dismiss);
+        overlay.addEventListener('click', function (e) { if (e.target === overlay) dismiss(); });
+      })
+      .catch(function(){ /* welcome is non-essential; never throw */ });
+  } catch (e) {
+    if (window.console) console.warn('welcome panel skipped:', e);
+  }
+})();
+
+/* ---------- Account strip + sign out (isolated; self-contained; cannot break page) ---------- */
+(function setupAccountStrip() {
+  try {
+    var header = document.querySelector('header');
+    if (!header) return;
+    var strip = document.createElement('div');
+    strip.id = 'oscaarAccount';
+    strip.style.cssText = 'position:absolute;top:14px;right:20px;display:flex;align-items:center;gap:10px;font-size:13px;color:#4f6b8a;z-index:60';
+    strip.innerHTML = '<span id="oscaarAccountLabel"></span>' +
+      '<button id="oscaarSignout" type="button" style="background:#f8fafc;border:1px solid #d0dce8;border-radius:8px;color:#4f6b8a;font-size:13px;padding:6px 12px;cursor:pointer">Sign out</button>';
+    // header may need relative positioning for absolute child
+    if (getComputedStyle(header).position === 'static') header.style.position = 'relative';
+    header.appendChild(strip);
+
+    document.getElementById('oscaarSignout').addEventListener('click', function () {
+      fetch('/auth/logout', { method: 'POST', credentials: 'same-origin' })
+        .catch(function(){})
+        .finally(function(){ window.location.href = '/login'; });
+    });
+
+    fetch('/auth/me', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.authenticated) return;
+        var label = d.is_demo ? 'Demo session'
+          : (d.email + ' · ' + (d.audience_type === 'medical' ? 'Clinician' : 'Patient'));
+        var el = document.getElementById('oscaarAccountLabel');
+        if (el) el.textContent = label;
+      })
+      .catch(function(){ /* leave strip without a label; never throw */ });
+  } catch (e) {
+    /* account strip is non-essential; never let it break the page */
+    if (window.console) console.warn('account strip skipped:', e);
+  }
+})();
 </script>
 
 </body>

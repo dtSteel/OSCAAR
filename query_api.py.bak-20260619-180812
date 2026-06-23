@@ -1,33 +1,17 @@
 import os
 import torch
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModel
 from qdrant_client import QdrantClient
 from openai import OpenAI
 
-# Auth module (folded in). Provides the hard gate + user model + query logging.
-import auth
-from auth import require_user, current_user, log_query
-
 app = FastAPI(title="OSCAAR Query API", version="1.0.0")
-
-# Register auth routes (/auth/*) and the SQLite startup hook.
-auth.init_auth(app)
-
-# Directory holding index.html, login.html, favicon.svg, and any static assets.
-FRONTEND_DIR = os.environ.get("OSCAAR_FRONTEND_DIR", "/mnt/oscaar")
 
 app.add_middleware(
     CORSMiddleware,
-    # The frontend is now served from the same origin as the API, so credentialed
-    # (cookie) requests are same-origin and don't need a CORS wildcard. A wildcard
-    # origin is, in fact, rejected by browsers when credentials are included.
-    allow_origins=[os.environ.get("OSCAAR_BASE_URL", "https://oscaar.org")],
-    allow_credentials=True,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -46,23 +30,16 @@ print("Model ready")
 qdrant    = QdrantClient(host="localhost", port=6333, timeout=120)
 ai_client = OpenAI(api_key=OPENAI_KEY)
 
-# ─── System prompt — now varies by audience type and answer language ─────────
-# The citation discipline is identical for everyone; only the tone/technicality
-# and the answer language change. This is the seam where audience_type and
-# response_language (stored per user) take effect.
+SYSTEM_PROMPT = """You are OSCAAR, an expert oncology research assistant.
+You answer clinical and research questions about cancer based solely on
+the peer-reviewed articles provided to you.
 
-_CITATION_BLOCK = """CITATION REQUIREMENTS — MANDATORY:
+CITATION REQUIREMENTS — MANDATORY:
 - Every factual claim MUST be cited inline
 - Format: [Author et al., Journal, Year, PMID: xxxxxxx]
 - If a claim cannot be supported by the provided articles, state:
   "This is not supported by the retrieved literature"
-- Never use knowledge from your training data alone"""
-
-_PROMPT_MEDICAL = """You are OSCAAR, an expert oncology research assistant.
-You answer clinical and research questions about cancer based solely on
-the peer-reviewed articles provided to you.
-
-{citations}
+- Never use knowledge from your training data alone
 
 RESPONSE FORMAT:
 - Begin with a direct answer
@@ -75,37 +52,6 @@ TONE:
 - Clinical and precise
 - Appropriate for physicians and researchers
 - Include statistics, p-values, confidence intervals where available"""
-
-_PROMPT_PATIENT = """You are OSCAAR, a careful and compassionate assistant that explains
-cancer research to patients and caregivers, based solely on the peer-reviewed
-articles provided to you.
-
-{citations}
-
-RESPONSE FORMAT:
-- Begin with a clear, direct answer in plain language
-- Briefly define any unavoidable medical terms
-- Keep citations inline as specified, but do not let them interrupt readability
-- Be honest about uncertainty and disagreements between studies
-- End with a short "What this means" summary and a numbered References section
-
-TONE:
-- Warm, clear, and reassuring without overpromising
-- Avoid jargon; explain ideas the way a good clinician would to a patient
-- Do NOT give individual medical advice; describe what the literature shows
-- Remind the reader to discuss decisions with their own care team"""
-
-_LANG_INSTRUCTION = {
-    "en": "",
-    "es": "\n\nIMPORTANT: Write your entire response in Spanish (español). "
-          "Keep citation brackets, author names, journal names, and PMIDs exactly as given.",
-}
-
-
-def build_system_prompt(audience_type: str, language: str) -> str:
-    base = _PROMPT_PATIENT if audience_type == "patient" else _PROMPT_MEDICAL
-    prompt = base.format(citations=_CITATION_BLOCK)
-    return prompt + _LANG_INSTRUCTION.get(language, "")
 
 # ─── Layer 1 — Keyword pre-filter ────────────────────────────
 ONCOLOGY_KEYWORDS = [
@@ -158,8 +104,6 @@ OFF_TOPIC_RESPONSE = "OSCAAR is designed specifically for oncology research. Ple
 class QueryRequest(BaseModel):
     question: str
     top_k: int = TOP_K
-    year_from: int | None = None
-    year_to: int | None = None
 
 class QueryResponse(BaseModel):
     answer:             str
@@ -179,7 +123,7 @@ def embed_query(text: str):
     return output.last_hidden_state.mean(dim=1).numpy().tolist()[0]
 
 @app.post("/query", response_model=QueryResponse)
-async def query(request: QueryRequest, user=Depends(require_user)):
+async def query(request: QueryRequest):
     if not request.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
 
@@ -196,36 +140,14 @@ async def query(request: QueryRequest, user=Depends(require_user)):
     # Embed the question
     query_vector = embed_query(request.question)
 
-    # Decide how many candidates to pull. If a year filter is active, over-fetch
-    # so that after filtering we still have enough results to work with.
-    has_year_filter = (request.year_from is not None) or (request.year_to is not None)
-    fetch_limit = (request.top_k * 8) if has_year_filter else request.top_k
-
     # Search Qdrant
     raw = qdrant.query_points(
         collection_name=COLLECTION,
         query=query_vector,
-        limit=fetch_limit,
+        limit=request.top_k,
         with_payload=True
     )
     results = raw.points
-
-    # Python-side year filtering (years are stored as strings; parse defensively).
-    if has_year_filter:
-        def _year_ok(hit):
-            raw_year = (hit.payload or {}).get("year", "")
-            try:
-                y = int(str(raw_year)[:4])   # first 4 chars handles "1975 Jul" etc.
-            except (ValueError, TypeError):
-                return False                  # unparseable/missing year -> exclude when filtering
-            if request.year_from is not None and y < request.year_from:
-                return False
-            if request.year_to is not None and y > request.year_to:
-                return False
-            return True
-
-        results = [h for h in results if _year_ok(h)]
-        results = results[:request.top_k]     # trim back to requested count
 
     if not results:
         raise HTTPException(status_code=404, detail="No relevant articles found")
@@ -271,13 +193,11 @@ RETRIEVED ARTICLES:
 
 Please provide a comprehensive, cited answer based solely on these articles."""
 
-    system_prompt = build_system_prompt(user.audience_type, user.response_language)
-
     response = ai_client.chat.completions.create(
         model="gpt-4.1-mini",
         max_tokens=2000,
         messages=[
-            {"role": "system", "content": system_prompt},
+            {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user",   "content": user_message}
         ]
     )
@@ -288,9 +208,6 @@ Please provide a comprehensive, cited answer based solely on these articles."""
         "output": response.usage.completion_tokens,
         "total":  response.usage.total_tokens
     }
-
-    # Record the query for history + counts (best-effort; never breaks the response).
-    log_query(user, request.question, tokens_used["total"])
 
     return QueryResponse(
         answer=answer,
@@ -307,44 +224,6 @@ async def health():
         "model":   "ncbi/MedCPT-Article-Encoder",
         "llm":     "gpt-4.1-mini"
     }
-
-
-# ─── Frontend serving + hard gate (Option A: FastAPI serves the UI) ──────────
-# The login page is always reachable. The query UI at "/" is only served to a
-# logged-in session; otherwise we redirect to /login. This is the hard gate:
-# there is no separate static server exposing the UI on another port.
-
-@app.get("/login")
-async def login_page():
-    return FileResponse(os.path.join(FRONTEND_DIR, "login.html"))
-
-@app.get("/favicon.svg")
-async def favicon():
-    path = os.path.join(FRONTEND_DIR, "favicon.svg")
-    if os.path.exists(path):
-        return FileResponse(path)
-    raise HTTPException(404, "not found")
-
-@app.get("/")
-async def index(request: Request):
-    if current_user(request) is None:
-        return RedirectResponse("/login", status_code=302)
-    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
-
-
-@app.get("/about")
-async def about(request: Request):
-    if current_user(request) is None:
-        return RedirectResponse("/login", status_code=302)
-    return FileResponse(os.path.join(FRONTEND_DIR, "about.html"))
-
-
-@app.get("/trials")
-async def trials(request: Request):
-    if current_user(request) is None:
-        return RedirectResponse("/login", status_code=302)
-    return FileResponse(os.path.join(FRONTEND_DIR, "trials.html"))
-
 
 if __name__ == "__main__":
     import uvicorn

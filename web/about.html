@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>About · OSCAAR</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI', system-ui, sans-serif; background:#f5f7fa; color:#1a2744; }
+
+  header {
+    background:#fff; padding:20px 40px;
+    display:flex; align-items:center; justify-content:space-between; position:relative;
+  }
+  .logo { display:flex; align-items:center; gap:14px; }
+  .logo-icon { width:48px; height:48px; flex-shrink:0; }
+  .logo-text h1 { font-size:22px; font-weight:700; color:#1a2744; letter-spacing:2px; }
+  .logo-text p { font-size:12px; color:#4f6b8a; letter-spacing:1px; text-transform:uppercase; }
+
+  .oscaar-nav {
+    background:#fff; border-bottom:2px solid #e0e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.06);
+    padding:0 40px; display:flex; align-items:center; gap:4px;
+  }
+  .oscaar-nav-link {
+    padding:13px 18px; font-size:14px; font-weight:500; color:#5c6f76; text-decoration:none;
+    border-bottom:2px solid transparent; margin-bottom:-2px; transition:color .15s, border-color .15s;
+  }
+  .oscaar-nav-link:hover { color:#1e6fff; }
+  .oscaar-nav-link.active { color:#1e6fff; border-bottom-color:#1e6fff; }
+
+  .account { position:absolute; top:22px; right:40px; display:flex; align-items:center; gap:10px; font-size:13px; color:#4f6b8a; }
+  .account button { background:#f8fafc; border:1px solid #d0dce8; border-radius:8px; color:#4f6b8a; font-size:13px; padding:6px 12px; cursor:pointer; }
+
+  main { max-width:760px; margin:0 auto; padding:48px 24px 80px; }
+  .about h2 { font-size:28px; font-weight:700; color:#1a2744; margin-bottom:8px; }
+  .about .lead { font-size:17px; line-height:1.6; color:#374f6b; margin-bottom:28px; }
+  .about h3 { font-size:18px; font-weight:700; color:#1e6fff; margin:28px 0 10px; }
+  .about p { font-size:15.5px; line-height:1.7; color:#2c3e52; margin-bottom:14px; }
+  .about .disclaimer {
+    background:#f0f4ff; border:1px solid #d6e2fb; border-radius:12px; padding:16px 18px;
+    font-size:14px; line-height:1.6; color:#374f6b; margin-top:24px;
+  }
+  footer { text-align:center; font-size:12px; color:#9fb0bd; padding:24px; border-top:1px solid #e8edf2; }
+  footer a { color:#4f6b8a; }
+  @media (max-width:600px){ header,.oscaar-nav{padding-left:16px;padding-right:16px} .account{right:16px} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="OSCAAR logo">
+        <defs>
+          <linearGradient id="oscaarGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#1e6fff"/><stop offset="1" stop-color="#00a8e8"/>
+          </linearGradient>
+        </defs>
+        <circle cx="24" cy="24" r="20" fill="none" stroke="url(#oscaarGrad)" stroke-width="5"/>
+        <g stroke="url(#oscaarGrad)" stroke-width="2.6" stroke-linecap="round" fill="none">
+          <path d="M18 13 C 30 20, 18 28, 30 35"/><path d="M30 13 C 18 20, 30 28, 18 35"/>
+        </g>
+        <g stroke="#00a8e8" stroke-width="2" stroke-linecap="round">
+          <line x1="20.5" y1="17" x2="27.5" y2="17"/><line x1="21" y1="24" x2="27" y2="24"/><line x1="20.5" y1="31" x2="27.5" y2="31"/>
+        </g>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <h1>OSCAAR</h1>
+      <p>Open Source Cancer Analysis and Research</p>
+    </div>
+  </div>
+  <div class="account" id="account">
+    <span id="accountLabel"></span>
+    <button onclick="signOut()" type="button">Sign out</button>
+  </div>
+</header>
+
+<nav class="oscaar-nav">
+  <a href="/" class="oscaar-nav-link">Ask</a>
+  <a href="/trials" class="oscaar-nav-link">Trials</a>
+  <a href="/about" class="oscaar-nav-link active">About</a>
+</nav>
+
+<main>
+  <div class="about">
+    <h2>About OSCAAR</h2>
+    <p class="lead">OSCAAR — Open Source Cancer Analysis and Research — exists to put the world's cancer literature within reach of the people who need it: the clinicians treating cancer, the researchers studying it, and the patients and families living with it.</p>
+
+    <p>Roughly 18 to 20 people die from cancer every minute worldwide. Behind that number is an enormous and fast-growing body of research — millions of peer-reviewed studies — that holds answers, but is scattered across journals and databases in language that's often impenetrable to anyone outside the field. OSCAAR was built to bridge that gap.</p>
+
+    <h3>How it works</h3>
+    <p>OSCAAR draws on a curated library of millions of peer-reviewed cancer articles. You ask a question in plain language — the way you'd ask a colleague — and OSCAAR answers directly from that literature, citing every source so you always know where the answer came from. Nothing is invented; every response is grounded in published research, and answers are tailored to whether you're a clinician seeking technical depth or a patient seeking clear, accessible explanations.</p>
+
+    <h3>Why open source</h3>
+    <p>OSCAAR is built in the open because cancer knowledge shouldn't sit behind walls. The platform is freely available, and its development is transparent. Our aim is a resource that serves the global community working against cancer — not a product that serves shareholders.</p>
+
+    <div class="disclaimer">
+      OSCAAR is a research and information tool. It summarizes and cites the published literature, but it does not provide medical advice, diagnosis, or treatment recommendations. Decisions about care should always be made with a qualified healthcare professional who knows your specific situation.
+    </div>
+  </div>
+</main>
+
+<footer>
+  Open Source Cancer Analysis and Research &bull; <a href="https://www.oscaar.org">oscaar.org</a>
+</footer>
+
+<script>
+async function loadAccount() {
+  try {
+    var res = await fetch('/auth/me', { credentials: 'same-origin' });
+    var data = await res.json();
+    if (!data.authenticated) { window.location.href = '/login'; return; }
+    var label = data.is_demo ? 'Demo session'
+      : (data.email + ' · ' + (data.audience_type === 'medical' ? 'Clinician' : 'Patient'));
+    document.getElementById('accountLabel').textContent = label;
+  } catch (e) {}
+}
+async function signOut() {
+  try { await fetch('/auth/logout', { method:'POST', credentials:'same-origin' }); } catch(e) {}
+  window.location.href = '/login';
+}
+loadAccount();
+</script>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sign in · OSCAAR</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'Segoe UI', system-ui, sans-serif;
+    background:#f5f7fa; color:#1a2744; min-height:100vh;
+    display:grid; place-items:center; padding:24px;
+  }
+  .card {
+    width:100%; max-width:440px; background:#fff;
+    border:1px solid #d0dce8; border-radius:16px;
+    box-shadow:0 2px 16px rgba(0,0,0,0.08); padding:36px 34px 28px;
+  }
+  .brand { display:flex; align-items:center; gap:14px; margin-bottom:6px; }
+  .brand-icon { width:46px; height:46px; flex-shrink:0; }
+  .brand-text h1 { font-size:22px; font-weight:700; letter-spacing:2px; color:#1a2744; }
+  .brand-text p { font-size:11px; color:#4f6b8a; letter-spacing:1px; text-transform:uppercase; }
+  .tagline { color:#4f6b8a; font-size:14px; line-height:1.5; margin:18px 0 24px; }
+  h2 { font-size:19px; font-weight:700; margin-bottom:16px; }
+
+  label { display:block; font-size:13px; font-weight:600; margin:14px 0 6px; }
+  input[type=email], input[type=password], input[type=text], select {
+    width:100%; padding:12px 13px; font-size:15px; font-family:inherit; color:#1a2744;
+    background:#f8fafc; border:1px solid #d0dce8; border-radius:10px; outline:none;
+    transition:border-color .2s, background .2s;
+  }
+  input:focus, select:focus { border-color:#1e6fff; background:#fff; }
+
+  .field { position:relative; }
+  .pw-wrap input { padding-right:46px; }
+  .eye {
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    background:none; border:none; padding:9px; cursor:pointer; color:#7d93ab;
+    display:grid; place-items:center; border-radius:8px;
+  }
+  .eye:hover { color:#1e6fff; background:#f0f4ff; }
+
+  .audience { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; }
+  .aud-opt {
+    border:1.5px solid #d0dce8; border-radius:12px; padding:13px; cursor:pointer;
+    background:#fff; transition:border-color .15s, background .15s;
+  }
+  .aud-opt:hover { border-color:#a8c4f0; }
+  .aud-opt.sel { border-color:#1e6fff; background:#f0f4ff; }
+  .aud-title { font-weight:600; font-size:13.5px; display:flex; align-items:center; gap:7px; }
+  .aud-desc { font-size:11.5px; color:#4f6b8a; margin-top:4px; line-height:1.4; }
+  .dot { width:9px; height:9px; border-radius:50%; border:1.5px solid #7d93ab; flex:none; }
+  .aud-opt.sel .dot { border-color:#1e6fff; background:#1e6fff; box-shadow:inset 0 0 0 2px #fff; }
+
+  .btn {
+    width:100%; margin-top:22px; padding:13px; font-size:15px; font-weight:700; font-family:inherit;
+    color:#fff; background:linear-gradient(135deg,#1e6fff,#00a8e8); border:none;
+    border-radius:11px; cursor:pointer; transition:opacity .2s;
+  }
+  .btn:hover { opacity:.92; }
+  .btn:disabled { opacity:.6; cursor:default; }
+
+  .divider { display:flex; align-items:center; gap:12px; margin:20px 0 4px; color:#7d93ab; font-size:12px; }
+  .divider::before, .divider::after { content:""; height:1px; background:#e0e8f0; flex:1; }
+
+  .google {
+    width:100%; margin-top:14px; padding:11px; font-size:14.5px; font-weight:600; font-family:inherit;
+    color:#1a2744; background:#fff; border:1px solid #d0dce8; border-radius:11px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;
+  }
+  .google:hover { background:#f8fafc; }
+  .google svg { width:18px; height:18px; }
+
+  .switch { text-align:center; margin-top:22px; font-size:13.5px; color:#4f6b8a; }
+  .switch a { color:#1e6fff; font-weight:600; text-decoration:none; cursor:pointer; }
+  .switch a:hover { text-decoration:underline; }
+
+  .msg { margin-top:16px; padding:11px 13px; border-radius:10px; font-size:13px; display:none; line-height:1.45; }
+  .msg.err { display:block; background:#fdecea; color:#cc3333; border:1px solid #f5c9c2; }
+  .msg.ok  { display:block; background:#e8f5ed; color:#1c7a44; border:1px solid #bfe3cd; }
+
+  .hint { font-size:11.5px; color:#7d93ab; margin-top:5px; }
+  .demo-note { font-size:12px; color:#7d93ab; text-align:center; margin-top:18px; line-height:1.5; }
+  [hidden] { display:none !important; }
+  @media (max-width:430px){ .card{padding:28px 22px} .audience{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="OSCAAR logo">
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#1e6fff"/><stop offset="1" stop-color="#00a8e8"/>
+            </linearGradient>
+          </defs>
+          <circle cx="24" cy="24" r="20" fill="none" stroke="url(#g)" stroke-width="5"/>
+          <g stroke="url(#g)" stroke-width="2.6" stroke-linecap="round" fill="none">
+            <path d="M18 13 C 30 20, 18 28, 30 35"/><path d="M30 13 C 18 20, 30 28, 18 35"/>
+          </g>
+          <g stroke="#00a8e8" stroke-width="2" stroke-linecap="round">
+            <line x1="20.5" y1="17" x2="27.5" y2="17"/><line x1="21" y1="24" x2="27" y2="24"/><line x1="20.5" y1="31" x2="27.5" y2="31"/>
+          </g>
+        </svg>
+      </div>
+      <div class="brand-text"><h1>OSCAAR</h1><p>Open Source Cancer Analysis and Research</p></div>
+    </div>
+    <p class="tagline">Search millions of peer-reviewed cancer articles. Every answer is cited.</p>
+
+    <h2 id="formTitle">Sign in</h2>
+
+    <div id="signupExtras" hidden>
+      <label>I'm a…</label>
+      <div class="audience" id="audience">
+        <div class="aud-opt sel" data-val="medical">
+          <div class="aud-title"><span class="dot"></span> Clinician / researcher</div>
+          <div class="aud-desc">Technical answers with full terminology.</div>
+        </div>
+        <div class="aud-opt" data-val="patient">
+          <div class="aud-title"><span class="dot"></span> Patient / caregiver</div>
+          <div class="aud-desc">Plain-language answers, same sources.</div>
+        </div>
+      </div>
+      <label for="lang">Answer language</label>
+      <select id="lang"></select>
+    </div>
+
+    <label for="email" id="emailLabel">Email</label>
+    <input id="email" type="email" autocomplete="email" placeholder="you@institution.org"/>
+
+    <label for="password">Password</label>
+    <div class="field pw-wrap">
+      <input id="password" type="password" autocomplete="current-password" placeholder="••••••••••"/>
+      <button class="eye" id="eyeBtn" type="button" aria-label="Show password" aria-pressed="false">
+        <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>
+        </svg>
+      </button>
+    </div>
+    <div class="hint" id="pwHint" hidden>At least 10 characters, mixing letters and numbers.</div>
+
+    <button class="btn" id="submitBtn">Sign in</button>
+    <div id="msg" class="msg"></div>
+    <div class="switch" id="resendWrap" hidden style="margin-top:12px">
+      <a id="resendLink">Resend verification email</a>
+    </div>
+
+    <div id="googleBlock" hidden>
+      <div class="divider">or</div>
+      <button class="google" id="googleBtn" type="button">
+        <svg viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.4 30.1 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.3 13.2 17.6 9.5 24 9.5Z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 7l7.1 5.5c4.2-3.9 6.6-9.6 6.6-16.5Z"/><path fill="#FBBC05" d="M10.4 28.3a14.8 14.8 0 0 1 0-9.4l-7.8-6.1a24 24 0 0 0 0 21.6l7.8-6.1Z"/><path fill="#34A853" d="M24 48c6.1 0 11.3-2 15-5.5l-7.1-5.5c-2 1.3-4.6 2.1-7.9 2.1-6.4 0-11.7-3.7-13.6-9l-7.8 6.1C6.5 42.6 14.6 48 24 48Z"/></svg>
+        Continue with Google
+      </button>
+    </div>
+
+    <div class="switch" id="switch">New to OSCAAR? <a id="toggleMode">Create an account</a></div>
+    <div class="demo-note" id="demoNote" hidden>Demonstration access is available — ask the staff present for today's demo login.</div>
+  </main>
+
+<script>
+var mode = "login";
+function $(id){ return document.getElementById(id); }
+
+/* eye toggle */
+$("eyeBtn").addEventListener("click", function(){
+  var pw = $("password"), pressed = $("eyeBtn").getAttribute("aria-pressed") === "true";
+  pw.type = pressed ? "password" : "text";
+  $("eyeBtn").setAttribute("aria-pressed", String(!pressed));
+  $("eyeBtn").setAttribute("aria-label", pressed ? "Show password" : "Hide password");
+  $("eyeIcon").innerHTML = pressed
+    ? '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>'
+    : '<path d="M9.9 4.2A10.9 10.9 0 0 1 12 4c6.5 0 10 7 10 7a18 18 0 0 1-3 3.9M6.6 6.6A18 18 0 0 0 2 11s3.5 7 10 7a10.8 10.8 0 0 0 5.4-1.4"/><path d="m1 1 22 22"/><path d="M9.5 9.6a3 3 0 0 0 4.2 4.2"/>';
+});
+
+/* audience cards */
+$("audience").addEventListener("click", function(e){
+  var opt = e.target.closest(".aud-opt"); if(!opt) return;
+  var all = document.querySelectorAll(".aud-opt");
+  for (var i=0;i<all.length;i++) all[i].classList.remove("sel");
+  opt.classList.add("sel");
+});
+function selectedAudience(){
+  var sel = document.querySelector(".aud-opt.sel");
+  return sel ? sel.getAttribute("data-val") : "patient";
+}
+
+/* mode toggle */
+function setMode(next){
+  mode = next;
+  var signup = mode === "signup";
+  $("formTitle").textContent = signup ? "Create your account" : "Sign in";
+  $("submitBtn").textContent = signup ? "Create account" : "Sign in";
+  $("signupExtras").hidden = !signup;
+  $("pwHint").hidden = !signup;
+  $("emailLabel").textContent = signup ? "Email" : "Email or username";
+  $("password").autocomplete = signup ? "new-password" : "current-password";
+  $("switch").innerHTML = signup
+    ? 'Already have an account? <a id="toggleMode">Sign in</a>'
+    : 'New to OSCAAR? <a id="toggleMode">Create an account</a>';
+  $("toggleMode").addEventListener("click", function(){ setMode(signup ? "login" : "signup"); });
+  clearMsg();
+}
+function clearMsg(){ var m=$("msg"); m.className="msg"; m.textContent=""; var rw=$("resendWrap"); if(rw) rw.hidden = true; }
+function showMsg(t,k){ var m=$("msg"); m.className="msg "+k; m.textContent=t; }
+$("toggleMode").addEventListener("click", function(){ setMode("signup"); });
+
+/* submit */
+$("submitBtn").addEventListener("click", async function(){
+  clearMsg();
+  var email = $("email").value.trim(), password = $("password").value;
+  if(!email || !password){ showMsg("Enter your credentials.", "err"); return; }
+  $("submitBtn").disabled = true;
+  var url = mode === "signup" ? "/auth/signup" : "/auth/login";
+  var body = new URLSearchParams({ email: email, password: password });
+  if(mode === "signup"){
+    body.set("audience_type", selectedAudience());
+    body.set("response_language", $("lang").value || "en");
+  }
+  try {
+    var r = await fetch(url, { method:"POST", credentials:"same-origin", body: body });
+    var data = await r.json().catch(function(){ return {}; });
+    if(!r.ok){
+      showMsg(data.detail || "Something went wrong.", "err");
+      // If sign-in failed because the email isn't verified, offer a resend.
+      if(r.status === 403 && mode === "login"){ $("resendWrap").hidden = false; }
+    }
+    else if(mode === "signup"){
+      showMsg(data.message || "Check your email to verify.", data.email_sent === false ? "err" : "ok");
+      $("resendWrap").hidden = false;   // let them resend if the first didn't arrive
+    }
+    else { window.location.href = data.redirect || "/"; }
+  } catch(e){ showMsg("Network error — try again.", "err"); }
+  finally { $("submitBtn").disabled = false; }
+});
+
+/* resend verification */
+$("resendLink").addEventListener("click", async function(){
+  var email = $("email").value.trim();
+  if(!email){ showMsg("Enter your email above first, then tap resend.", "err"); return; }
+  try {
+    var r = await fetch("/auth/resend-verification", {
+      method:"POST", credentials:"same-origin",
+      body: new URLSearchParams({ email: email })
+    });
+    var data = await r.json().catch(function(){ return {}; });
+    showMsg(data.message || "If that email needs verification, a new link is on its way.", "ok");
+  } catch(e){ showMsg("Network error — try again.", "err"); }
+});
+
+$("password").addEventListener("keydown", function(e){ if(e.key === "Enter") $("submitBtn").click(); });
+$("googleBtn").addEventListener("click", function(){ window.location.href = "/auth/google/login"; });
+
+/* bootstrap from server config */
+(async function(){
+  try {
+    var cfg = await (await fetch("/auth/config", { credentials:"same-origin" })).json();
+    var sel = $("lang");
+    Object.keys(cfg.languages).forEach(function(code){
+      var o = document.createElement("option"); o.value = code; o.textContent = cfg.languages[code]; sel.appendChild(o);
+    });
+    var nav = (navigator.language || "en").slice(0,2);
+    if(cfg.languages[nav]) sel.value = nav;
+    if(cfg.google_enabled) $("googleBlock").hidden = false;
+    if(cfg.demo_enabled) $("demoNote").hidden = false;
+  } catch(e){}
+})();
+</script>
+</body>
+</html>
