@@ -13,3 +13,8 @@ baseline/
 __pycache__/
 *.pyc
 .env
+*.db
+*.db.bak
+oscaar-before-wipe-*.db
+*.mmdb
+*.bak
