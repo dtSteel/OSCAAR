@@ -600,9 +600,16 @@ function getYearRange() {
   if (sel === 'custom') {
     var f = parseInt(document.getElementById('yearFrom').value, 10);
     var t = parseInt(document.getElementById('yearTo').value, 10);
+    // Clamp to sane bounds: floor 1900, cap current year, swap if reversed.
+    if (!isNaN(f)) f = Math.max(1900, Math.min(f, thisYear));
+    if (!isNaN(t)) t = Math.max(1900, Math.min(t, thisYear));
+    if (!isNaN(f) && !isNaN(t) && f > t) { var tmp = f; f = t; t = tmp; }
     var out = {};
     if (!isNaN(f)) out.year_from = f;
     if (!isNaN(t)) out.year_to = t;
+    // Reflect the corrected values back into the inputs so the user sees them.
+    if (!isNaN(f)) document.getElementById('yearFrom').value = f;
+    if (!isNaN(t)) document.getElementById('yearTo').value = t;
     return out;
   }
   return {};
