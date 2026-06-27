@@ -1,4 +1,5 @@
 import os
+import datetime
 import torch
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModel
 from qdrant_client import QdrantClient
+from qdrant_client.models import Filter, FieldCondition, Range
 from openai import OpenAI
 
 # Auth module (folded in). Provides the hard gate + user model + query logging.
@@ -32,7 +34,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-COLLECTION    = "cancer_articles"
+COLLECTION    = "cancer_articles_v2"
 TOP_K         = 15
 OPENAI_KEY    = os.environ.get("OPENAI_API_KEY", "")
 
@@ -196,39 +198,51 @@ async def query(request: QueryRequest, user=Depends(require_user)):
     # Embed the question
     query_vector = embed_query(request.question)
 
-    # Decide how many candidates to pull. If a year filter is active, over-fetch
-    # so that after filtering we still have enough results to work with.
-    has_year_filter = (request.year_from is not None) or (request.year_to is not None)
-    fetch_limit = (request.top_k * 8) if has_year_filter else request.top_k
+    # Clamp the year range to sane bounds before filtering:
+    #   - no year below 1900
+    #   - no year in the future (cap at the current year, computed live)
+    #   - if start ended up after end, swap so the range is always valid
+    # Bad input is corrected silently and the query still runs.
+    current_year = datetime.datetime.now().year
+    yf, yt = request.year_from, request.year_to
+    if yf is not None:
+        yf = max(1900, min(yf, current_year))
+    if yt is not None:
+        yt = max(1900, min(yt, current_year))
+    if yf is not None and yt is not None and yf > yt:
+        yf, yt = yt, yf
+
+    # Native year_int range filter — uses the payload index, so Qdrant returns
+    # the top-k most similar articles that ALREADY match the year range, instead
+    # of over-fetching and discarding in Python (which failed for sparse years).
+    qdrant_filter = None
+    if yf is not None or yt is not None:
+        rng = {}
+        if yf is not None:
+            rng["gte"] = yf
+        if yt is not None:
+            rng["lte"] = yt
+        qdrant_filter = Filter(must=[FieldCondition(key="year_int", range=Range(**rng))])
 
     # Search Qdrant
     raw = qdrant.query_points(
         collection_name=COLLECTION,
         query=query_vector,
-        limit=fetch_limit,
-        with_payload=True
+        limit=request.top_k,
+        with_payload=True,
+        query_filter=qdrant_filter,
     )
     results = raw.points
 
-    # Python-side year filtering (years are stored as strings; parse defensively).
-    if has_year_filter:
-        def _year_ok(hit):
-            raw_year = (hit.payload or {}).get("year", "")
-            try:
-                y = int(str(raw_year)[:4])   # first 4 chars handles "1975 Jul" etc.
-            except (ValueError, TypeError):
-                return False                  # unparseable/missing year -> exclude when filtering
-            if request.year_from is not None and y < request.year_from:
-                return False
-            if request.year_to is not None and y > request.year_to:
-                return False
-            return True
-
-        results = [h for h in results if _year_ok(h)]
-        results = results[:request.top_k]     # trim back to requested count
-
+    # No matches is a valid outcome, not an error — return a graceful answer
+    # rather than a 404 (which the frontend surfaced as "Server error: 404").
     if not results:
-        raise HTTPException(status_code=404, detail="No relevant articles found")
+        return QueryResponse(
+            answer="No articles in the selected year range matched your question. "
+                   "Try widening the year range or removing the year filter.",
+            retrieved_articles=[],
+            tokens_used={"input": 0, "output": 0, "total": 0},
+        )
 
     context_parts = []
     articles      = []
