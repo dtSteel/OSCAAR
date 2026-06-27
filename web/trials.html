@@ -3,75 +3,686 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Clinical Trials · OSCAAR</title>
+<title>OSCAAR — Clinical Trials Search</title>
+<meta name="description" content="Search recruiting and completed cancer clinical trials from ClinicalTrials.gov, including many international studies. OSCAAR queries the registry in real time for patients, clinicians, and researchers.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://oscaar.org/trials">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Segoe UI', system-ui, sans-serif; background:#f5f7fa; color:#1a2744; }
-  header { background:#fff; padding:20px 40px; display:flex; align-items:center; justify-content:space-between; position:relative; }
-  .logo { display:flex; align-items:center; gap:14px; }
-  .logo-icon { width:48px; height:48px; flex-shrink:0; }
-  .logo-text h1 { font-size:22px; font-weight:700; color:#1a2744; letter-spacing:2px; }
-  .logo-text p { font-size:12px; color:#4f6b8a; letter-spacing:1px; text-transform:uppercase; }
-  .oscaar-nav { background:#fff; border-bottom:2px solid #e0e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.06); padding:0 40px; display:flex; align-items:center; gap:4px; }
-  .oscaar-nav-link { padding:13px 18px; font-size:14px; font-weight:500; color:#5c6f76; text-decoration:none; border-bottom:2px solid transparent; margin-bottom:-2px; }
-  .oscaar-nav-link:hover { color:#1e6fff; }
-  .oscaar-nav-link.active { color:#1e6fff; border-bottom-color:#1e6fff; }
-  .account { position:absolute; top:22px; right:40px; display:flex; align-items:center; gap:10px; font-size:13px; color:#4f6b8a; }
-  .account button { background:#f8fafc; border:1px solid #d0dce8; border-radius:8px; color:#4f6b8a; font-size:13px; padding:6px 12px; cursor:pointer; }
-  main { max-width:680px; margin:0 auto; padding:80px 24px; text-align:center; }
-  .coming h2 { font-size:26px; font-weight:700; margin-bottom:12px; }
-  .coming p { font-size:16px; line-height:1.6; color:#4f6b8a; }
-  @media (max-width:600px){ header,.oscaar-nav{padding-left:16px;padding-right:16px} .account{right:16px} }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f5f7fa;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  header {
+    background: #ffffff;
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .oscaar-nav {
+    background: #ffffff;
+    border-bottom: 2px solid #e0e8f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .oscaar-nav-link {
+    padding: 13px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #5c6f76;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .oscaar-nav-link:hover { color: #1e6fff; }
+  .oscaar-nav-link.active {
+    color: #1e6fff;
+    border-bottom-color: #1e6fff;
+  }
+  @media (max-width: 600px) {
+    .oscaar-nav { padding: 0 16px; }
+    .oscaar-nav-link { padding: 12px 12px; }
+  }
+
+  .logo { display: flex; align-items: center; gap: 14px; }
+  .logo-icon { width: 48px; height: 48px; flex-shrink: 0; }
+  .logo-text h1 { font-size: 22px; font-weight: 700; color: #1a2744; letter-spacing: 2px; }
+  .logo-text p { font-size: 12px; color: #4f6b8a; letter-spacing: 1px; text-transform: uppercase; }
+
+  main { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+
+  .hero { text-align: center; margin-bottom: 36px; }
+  .hero h2 { font-size: 30px; font-weight: 700; color: #1a2744; margin-bottom: 10px; }
+  .hero h2 span { color: #1e6fff; }
+  .hero p { color: #4f6b8a; font-size: 15px; max-width: 600px; margin: 0 auto; line-height: 1.6; }
+
+  .search-box {
+    background: #ffffff;
+    border: 1px solid #d0dce8;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  /* Field grid */
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 600px) { .field-grid { grid-template-columns: 1fr; } }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+  .field label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #4f6b8a;
+  }
+  .field label .opt { font-weight: 400; text-transform: none; letter-spacing: 0; color: #7d93ab; }
+
+  .field input[type="text"],
+  .field select {
+    width: 100%;
+    background: #f8fafc;
+    border: 1px solid #d0dce8;
+    border-radius: 10px;
+    color: #1a2744;
+    font-size: 15px;
+    padding: 12px 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .field input[type="text"]:focus,
+  .field select:focus { border-color: #1e6fff; background: #ffffff; }
+  .field input::placeholder { color: #7d93ab; }
+
+  .search-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 18px;
+  }
+
+  .submit-btn {
+    background: linear-gradient(135deg, #1e6fff, #00a8e8);
+    border: none;
+    color: white;
+    padding: 12px 32px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(30,111,255,0.3);
+  }
+  .submit-btn:hover { opacity: 0.9; }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .loading { display: none; text-align: center; padding: 40px; }
+  .loading.active { display: block; }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 3px solid #d0dce8;
+    border-top-color: #1e6fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading p { color: #4f6b8a; font-size: 14px; }
+
+  .result { display: none; }
+  .result.active { display: block; }
+
+  .result-summary {
+    font-size: 13px;
+    color: #4f6b8a;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e8eef4;
+  }
+  .result-summary strong { color: #1a2744; }
+
+  .trial-card {
+    background: #ffffff;
+    border: 1px solid #d0dce8;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    transition: box-shadow 0.2s;
+  }
+  .trial-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+  .trial-title {
+    color: #1a2744;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+  .trial-title a { color: #1a2744; text-decoration: none; }
+  .trial-title a:hover { color: #1e6fff; }
+
+  .trial-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+
+  .badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .badge-status { background: #f0f4ff; border: 1px solid #c0d0f0; color: #1e6fff; }
+  .badge-status.recruiting { background: #e8f7ee; border-color: #a8e0bd; color: #1a8a4a; }
+  .badge-status.completed { background: #eef0f4; border-color: #c8d0dc; color: #5c6f8a; }
+  .badge-status.terminated,
+  .badge-status.withdrawn,
+  .badge-status.suspended { background: #fdeeee; border-color: #f0c0c0; color: #c0392b; }
+  .badge-phase { background: #fff6e8; border: 1px solid #f0d8a8; color: #b07a1a; }
+  .badge-type { background: #f4f0fb; border: 1px solid #d8c8f0; color: #7a4ab0; }
+
+  .trial-meta { font-size: 13px; color: #4f6b8a; line-height: 1.7; }
+  .trial-meta .row { margin-bottom: 3px; }
+  .trial-meta .key {
+    display: inline-block;
+    min-width: 92px;
+    color: #7d93ab;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .trial-meta .val { color: #2a3a5a; }
+
+  .trial-locations {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #f0f4f8;
+    font-size: 12px;
+    color: #4f6b8a;
+  }
+  .trial-locations .loc-line { margin-bottom: 2px; }
+  .trial-locations .more { color: #7d93ab; font-style: italic; }
+
+  .load-more {
+    display: block;
+    margin: 8px auto 0;
+    background: #f0f4ff;
+    border: 1px solid #c0d0f0;
+    color: #1e6fff;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 11px 28px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .load-more:hover { background: #1e6fff; color: #fff; border-color: #1e6fff; }
+  .load-more:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #7d93ab;
+    font-size: 14px;
+  }
+
+  .error-card {
+    background: #fff5f5;
+    border: 1px solid #ffc0c0;
+    border-radius: 16px;
+    padding: 24px;
+    color: #cc3333;
+    display: none;
+    margin-bottom: 20px;
+  }
+  .error-card.active { display: block; }
+
+  footer {
+    text-align: center;
+    padding: 30px;
+    color: #7d93ab;
+    font-size: 12px;
+    border-top: 1px solid #e0e8f0;
+    margin-top: 40px;
+    background: #ffffff;
+  }
+  footer a { color: #1e6fff; text-decoration: none; }
 </style>
 </head>
 <body>
+
 <header>
   <div class="logo">
     <div class="logo-icon">
       <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="OSCAAR logo">
-        <defs><linearGradient id="oscaarGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stop-color="#1e6fff"/><stop offset="1" stop-color="#00a8e8"/></linearGradient></defs>
+        <defs>
+          <linearGradient id="oscaarGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#1e6fff"/>
+            <stop offset="1" stop-color="#00a8e8"/>
+          </linearGradient>
+        </defs>
         <circle cx="24" cy="24" r="20" fill="none" stroke="url(#oscaarGrad)" stroke-width="5"/>
         <g stroke="url(#oscaarGrad)" stroke-width="2.6" stroke-linecap="round" fill="none">
-          <path d="M18 13 C 30 20, 18 28, 30 35"/><path d="M30 13 C 18 20, 30 28, 18 35"/></g>
+          <path d="M18 13 C 30 20, 18 28, 30 35"/>
+          <path d="M30 13 C 18 20, 30 28, 18 35"/>
+        </g>
         <g stroke="#00a8e8" stroke-width="2" stroke-linecap="round">
-          <line x1="20.5" y1="17" x2="27.5" y2="17"/><line x1="21" y1="24" x2="27" y2="24"/><line x1="20.5" y1="31" x2="27.5" y2="31"/></g>
+          <line x1="20.5" y1="17" x2="27.5" y2="17"/>
+          <line x1="21" y1="24" x2="27" y2="24"/>
+          <line x1="20.5" y1="31" x2="27.5" y2="31"/>
+        </g>
       </svg>
     </div>
-    <div class="logo-text"><h1>OSCAAR</h1><p>Open Source Cancer Analysis and Research</p></div>
-  </div>
-  <div class="account" id="account">
-    <span id="accountLabel"></span>
-    <button onclick="signOut()" type="button">Sign out</button>
+    <div class="logo-text">
+      <h1>OSCAAR</h1>
+      <p>Open Source Cancer Analysis and Research</p>
+    </div>
   </div>
 </header>
+
 <nav class="oscaar-nav">
   <a href="/" class="oscaar-nav-link">Ask</a>
   <a href="/trials" class="oscaar-nav-link active">Trials</a>
   <a href="/about" class="oscaar-nav-link">About</a>
 </nav>
+
 <main>
-  <div class="coming">
-    <h2>Clinical Trials</h2>
-    <p>Coming soon — search active cancer clinical trials by type, location, and status, drawn from ClinicalTrials.gov.</p>
+  <div class="hero">
+    <h2>Find cancer <span>clinical trials</span></h2>
+    <p>Search recruiting and completed cancer trials, including many international studies, drawn from ClinicalTrials.gov and updated daily. Enter a cancer type to begin; add filters to narrow the results.</p>
+  </div>
+
+  <div class="search-box">
+    <div class="field-grid">
+      <div class="field full">
+        <label for="condition">Cancer type or condition</label>
+        <input type="text" id="condition" placeholder="e.g. breast cancer, glioblastoma, multiple myeloma" autocomplete="off">
+      </div>
+
+      <div class="field full">
+        <label for="intervention">Treatment or drug <span class="opt">(optional)</span></label>
+        <input type="text" id="intervention" placeholder="e.g. pembrolizumab, radiation, immunotherapy" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label for="status">Recruitment status <span class="opt">(optional)</span></label>
+        <select id="status">
+          <option value="">Any status</option>
+          <option value="RECRUITING">Recruiting</option>
+          <option value="NOT_YET_RECRUITING">Not yet recruiting</option>
+          <option value="ACTIVE_NOT_RECRUITING">Active, not recruiting</option>
+          <option value="ENROLLING_BY_INVITATION">Enrolling by invitation</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="SUSPENDED">Suspended</option>
+          <option value="TERMINATED">Terminated</option>
+          <option value="WITHDRAWN">Withdrawn</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="phase">Trial phase <span class="opt">(optional)</span></label>
+        <select id="phase">
+          <option value="">Any phase</option>
+          <option value="EARLY_PHASE1">Early Phase 1</option>
+          <option value="PHASE1">Phase 1</option>
+          <option value="PHASE2">Phase 2</option>
+          <option value="PHASE3">Phase 3</option>
+          <option value="PHASE4">Phase 4</option>
+          <option value="NA">Not Applicable</option>
+        </select>
+      </div>
+
+      <div class="field full">
+        <label for="state">State <span class="opt">(optional — US trials)</span></label>
+        <select id="state">
+        <option value="">Any US state</option>
+        <option value="Alabama">Alabama</option>
+        <option value="Alaska">Alaska</option>
+        <option value="Arizona">Arizona</option>
+        <option value="Arkansas">Arkansas</option>
+        <option value="California">California</option>
+        <option value="Colorado">Colorado</option>
+        <option value="Connecticut">Connecticut</option>
+        <option value="Delaware">Delaware</option>
+        <option value="District of Columbia">District of Columbia</option>
+        <option value="Florida">Florida</option>
+        <option value="Georgia">Georgia</option>
+        <option value="Hawaii">Hawaii</option>
+        <option value="Idaho">Idaho</option>
+        <option value="Illinois">Illinois</option>
+        <option value="Indiana">Indiana</option>
+        <option value="Iowa">Iowa</option>
+        <option value="Kansas">Kansas</option>
+        <option value="Kentucky">Kentucky</option>
+        <option value="Louisiana">Louisiana</option>
+        <option value="Maine">Maine</option>
+        <option value="Maryland">Maryland</option>
+        <option value="Massachusetts">Massachusetts</option>
+        <option value="Michigan">Michigan</option>
+        <option value="Minnesota">Minnesota</option>
+        <option value="Mississippi">Mississippi</option>
+        <option value="Missouri">Missouri</option>
+        <option value="Montana">Montana</option>
+        <option value="Nebraska">Nebraska</option>
+        <option value="Nevada">Nevada</option>
+        <option value="New Hampshire">New Hampshire</option>
+        <option value="New Jersey">New Jersey</option>
+        <option value="New Mexico">New Mexico</option>
+        <option value="New York">New York</option>
+        <option value="North Carolina">North Carolina</option>
+        <option value="North Dakota">North Dakota</option>
+        <option value="Ohio">Ohio</option>
+        <option value="Oklahoma">Oklahoma</option>
+        <option value="Oregon">Oregon</option>
+        <option value="Pennsylvania">Pennsylvania</option>
+        <option value="Rhode Island">Rhode Island</option>
+        <option value="South Carolina">South Carolina</option>
+        <option value="South Dakota">South Dakota</option>
+        <option value="Tennessee">Tennessee</option>
+        <option value="Texas">Texas</option>
+        <option value="Utah">Utah</option>
+        <option value="Vermont">Vermont</option>
+        <option value="Virginia">Virginia</option>
+        <option value="Washington">Washington</option>
+        <option value="West Virginia">West Virginia</option>
+        <option value="Wisconsin">Wisconsin</option>
+        <option value="Wyoming">Wyoming</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="search-actions">
+      <button class="submit-btn" id="submitBtn" onclick="searchTrials()">Search trials</button>
+    </div>
+  </div>
+
+  <div class="error-card" id="errorCard"></div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Searching ClinicalTrials.gov…</p>
+  </div>
+
+  <div class="result" id="result">
+    <div class="result-summary" id="resultSummary"></div>
+    <div id="trialsList"></div>
+    <button class="load-more" id="loadMoreBtn" onclick="loadMore()" style="display:none">Load more trials</button>
   </div>
 </main>
+
+<footer>
+  Trial data from <a href="https://clinicaltrials.gov" target="_blank" rel="noopener">ClinicalTrials.gov</a>,
+  a service of the U.S. National Library of Medicine. OSCAAR does not endorse any trial;
+  always consult a physician.
+</footer>
+
 <script>
-async function loadAccount() {
+const API = '/api/trials';
+
+// Pagination + current-query state
+var nextPageToken = null;
+var currentParams = null;
+var totalCount = 0;
+var loadedCount = 0;
+
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function titleCase(s) {
+  // Turn API enums like ACTIVE_NOT_RECRUITING into "Active Not Recruiting"
+  if (!s) return '';
+  return String(s).toLowerCase().split('_')
+    .map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
+}
+
+function phaseLabel(p) {
+  if (!p) return '';
+  if (p === 'NA') return 'N/A';
+  return titleCase(p).replace('Phase1','Phase 1'); // defensive; phases arrive as PHASE3 etc.
+}
+
+function statusClass(s) {
+  if (!s) return '';
+  s = s.toUpperCase();
+  if (s === 'RECRUITING' || s === 'NOT_YET_RECRUITING' || s === 'ENROLLING_BY_INVITATION') return 'recruiting';
+  if (s === 'COMPLETED') return 'completed';
+  if (s === 'TERMINATED' || s === 'WITHDRAWN' || s === 'SUSPENDED') return 'terminated';
+  return '';
+}
+
+function buildParams(pageToken) {
+  var p = new URLSearchParams();
+  p.set('condition', document.getElementById('condition').value.trim());
+  var intr = document.getElementById('intervention').value.trim();
+  var status = document.getElementById('status').value;
+  var phase = document.getElementById('phase').value;
+  var state = document.getElementById('state').value;
+  if (intr)   p.set('intervention', intr);
+  if (status) p.set('status', status);
+  if (phase)  p.set('phase', phase);
+  if (state)  p.set('location', state);
+  p.set('page_size', '20');
+  if (pageToken) p.set('page_token', pageToken);
+  return p;
+}
+
+function renderCard(t) {
+  // Defensive: every array field can be null/empty.
+  var conds = (t.conditions && t.conditions.length) ? t.conditions.join(', ') : '—';
+  var phases = (t.phases && t.phases.length)
+    ? t.phases.map(phaseLabel).filter(function(x){ return x && x !== 'N/A'; })
+    : [];
+  var phaseBadge = phases.length
+    ? '<span class="badge badge-phase">' + esc(phases.join(' / ')) + '</span>' : '';
+  var typeBadge = t.studyType
+    ? '<span class="badge badge-type">' + esc(titleCase(t.studyType)) + '</span>' : '';
+  var sc = statusClass(t.status);
+
+  // Locations: show up to 3, summarize the rest
+  var locHtml = '';
+  if (t.locations && t.locations.length) {
+    var shown = t.locations.slice(0, 3).map(function(l) {
+      var parts = [l.city, l.state, l.country].filter(Boolean).map(esc);
+      var place = parts.join(', ');
+      var fac = l.facility ? esc(l.facility) : '';
+      return '<div class="loc-line">' + (fac ? fac + (place ? ' — ' : '') : '') + place + '</div>';
+    }).join('');
+    var extra = (t.locationCount || t.locations.length) - 3;
+    var moreLine = extra > 0
+      ? '<div class="loc-line more">+ ' + extra + ' more site' + (extra > 1 ? 's' : '') + '</div>' : '';
+    locHtml = '<div class="trial-locations">' + shown + moreLine + '</div>';
+  }
+
+  var titleText = esc(t.title || t.officialTitle || 'Untitled trial');
+  var titleHtml = t.url
+    ? '<a href="' + esc(t.url) + '" target="_blank" rel="noopener">' + titleText + '</a>'
+    : titleText;
+
+  var dates = [];
+  if (t.startDate)      dates.push('Started ' + esc(t.startDate));
+  if (t.completionDate) dates.push('Est. completion ' + esc(t.completionDate));
+
+  return '<div class="trial-card">' +
+    '<div class="trial-title">' + titleHtml + '</div>' +
+    '<div class="trial-badges">' +
+      (t.status ? '<span class="badge badge-status ' + sc + '">' + esc(titleCase(t.status)) + '</span>' : '') +
+      phaseBadge + typeBadge +
+    '</div>' +
+    '<div class="trial-meta">' +
+      '<div class="row"><span class="key">Conditions</span><span class="val">' + esc(conds) + '</span></div>' +
+      (t.leadSponsor ? '<div class="row"><span class="key">Sponsor</span><span class="val">' + esc(t.leadSponsor) + '</span></div>' : '') +
+      (dates.length ? '<div class="row"><span class="key">Timeline</span><span class="val">' + dates.join(' &bull; ') + '</span></div>' : '') +
+      (t.nctId ? '<div class="row"><span class="key">Registry ID</span><span class="val">' + esc(t.nctId) + '</span></div>' : '') +
+    '</div>' +
+    locHtml +
+  '</div>';
+}
+
+function showError(msg) {
+  var card = document.getElementById('errorCard');
+  card.textContent = 'Error: ' + msg;
+  card.classList.add('active');
+}
+
+function clearError() {
+  document.getElementById('errorCard').classList.remove('active');
+}
+
+async function runSearch(pageToken, append) {
+  var btn = document.getElementById('submitBtn');
+  var moreBtn = document.getElementById('loadMoreBtn');
+  clearError();
+
+  if (append) {
+    moreBtn.disabled = true;
+    moreBtn.textContent = 'Loading…';
+  } else {
+    btn.disabled = true;
+    document.getElementById('loading').classList.add('active');
+    document.getElementById('result').classList.remove('active');
+  }
+
   try {
-    var res = await fetch('/auth/me', { credentials: 'same-origin' });
+    var params = pageToken ? currentParams : buildParams(null);
+    if (pageToken) params.set('page_token', pageToken); else params.delete('page_token');
+
+    var res = await fetch(API + '/search?' + params.toString(), {
+      method: 'GET',
+      credentials: 'same-origin'
+    });
+
+    if (res.status === 401 || res.status === 403) { window.location.href = '/login'; return; }
+    if (!res.ok) {
+      var detail = '';
+      try { var ej = await res.json(); detail = ej.detail || ''; } catch (e) {}
+      throw new Error(detail || ('Server returned ' + res.status));
+    }
+
     var data = await res.json();
-    if (!data.authenticated) { window.location.href = '/login'; return; }
-    document.getElementById('accountLabel').textContent = data.is_demo ? 'Demo session'
-      : (data.email + ' · ' + (data.audience_type === 'medical' ? 'Clinician' : 'Patient'));
-  } catch (e) {}
+    var list = document.getElementById('trialsList');
+    var cards = (data.results || []).map(renderCard).join('');
+
+    if (append) {
+      list.insertAdjacentHTML('beforeend', cards);
+      loadedCount += (data.results || []).length;
+    } else {
+      currentParams = params;
+      totalCount = data.totalCount || 0;
+      loadedCount = (data.results || []).length;
+      if (!loadedCount) {
+        list.innerHTML = '<div class="empty-state">No trials matched your search. Try a broader condition or remove filters.</div>';
+      } else {
+        list.innerHTML = cards;
+      }
+    }
+
+    nextPageToken = data.nextPageToken || null;
+
+    // Summary line
+    var summary = document.getElementById('resultSummary');
+    if (loadedCount) {
+      summary.innerHTML = 'Showing <strong>' + loadedCount + '</strong> of <strong>' +
+        totalCount.toLocaleString() + '</strong> matching trial' + (totalCount === 1 ? '' : 's') + '.';
+    } else {
+      summary.innerHTML = '';
+    }
+
+    // Load-more visibility
+    moreBtn.style.display = nextPageToken ? 'block' : 'none';
+
+    document.getElementById('result').classList.add('active');
+
+  } catch (err) {
+    showError(err.message);
+    if (!append) document.getElementById('result').classList.remove('active');
+  } finally {
+    document.getElementById('loading').classList.remove('active');
+    btn.disabled = false;
+    moreBtn.disabled = false;
+    moreBtn.textContent = 'Load more trials';
+  }
 }
-async function signOut() {
-  try { await fetch('/auth/logout', { method:'POST', credentials:'same-origin' }); } catch(e) {}
-  window.location.href = '/login';
+
+function searchTrials() {
+  var cond = document.getElementById('condition').value.trim();
+  if (!cond) {
+    showError('Please enter a cancer type or condition to search.');
+    return;
+  }
+  nextPageToken = null;
+  runSearch(null, false);
 }
-loadAccount();
+
+function loadMore() {
+  if (nextPageToken) runSearch(nextPageToken, true);
+}
+
+// Enter key in the condition or intervention field triggers a search
+['condition','intervention'].forEach(function(id) {
+  document.getElementById(id).addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); searchTrials(); }
+  });
+});
+
+/* ---------- Account strip + sign out (matches index.html; self-contained) ---------- */
+(function setupAccountStrip() {
+  try {
+    var header = document.querySelector('header');
+    if (!header) return;
+    var strip = document.createElement('div');
+    strip.id = 'oscaarAccount';
+    strip.style.cssText = 'position:absolute;top:14px;right:20px;display:flex;align-items:center;gap:10px;font-size:13px;color:#4f6b8a;z-index:60';
+    strip.innerHTML = '<span id="oscaarAccountLabel"></span>' +
+      '<button id="oscaarSignout" type="button" style="background:#f8fafc;border:1px solid #d0dce8;border-radius:8px;color:#4f6b8a;font-size:13px;padding:6px 12px;cursor:pointer">Sign out</button>';
+    if (getComputedStyle(header).position === 'static') header.style.position = 'relative';
+    header.appendChild(strip);
+
+    document.getElementById('oscaarSignout').addEventListener('click', function () {
+      fetch('/auth/logout', { method: 'POST', credentials: 'same-origin' })
+        .catch(function(){})
+        .finally(function(){ window.location.href = '/login'; });
+    });
+
+    fetch('/auth/me', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.authenticated) return;
+        var label = d.is_demo ? 'Demo session'
+          : (d.email + ' · ' + (d.audience_type === 'medical' ? 'Clinician' : 'Patient'));
+        var el = document.getElementById('oscaarAccountLabel');
+        if (el) el.textContent = label;
+      })
+      .catch(function(){ /* leave strip without a label; never throw */ });
+  } catch (e) {
+    if (window.console) console.warn('account strip skipped:', e);
+  }
+})();
 </script>
+
 </body>
 </html>
